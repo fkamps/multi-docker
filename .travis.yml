@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t fkamps/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run fkamps/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t fkamps/multi-client ./client
+  - docker build -t fkamps/multi-nginx ./nginx
+  - docker build -t fkamps/multi-server ./server
+  - docker build -t fkamps/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push fkamps/multi-client
+  - docker push fkamps/multi-nginx
+  - docker push fkamps/multi-server
+  - docker push fkamps/multi-worker
